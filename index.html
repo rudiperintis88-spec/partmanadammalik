@@ -151,7 +151,7 @@ body.locked #rp{display:none}
   <p class="sub">Part yang sudah ready menurut sheet Keterangan dan belum punya Tgl Ambil, dikelompokkan per Service Advisor. Satu baris per nomor PSO; klik baris untuk melihat semua barangnya.</p>
   <div class="tiles">
     <div class="card tile" data-tile="item" role="button" tabindex="0"><span class="lbl">Item part ready ditampilkan</span><span class="big"><b id="t-item" data-source="kpi" data-field="item" data-row="0">—</b></span></div>
-    <div class="card tile" data-tile="done" role="button" tabindex="0"><span class="lbl">Sudah diambil (disembunyikan)</span><span class="big"><b id="t-done" data-source="kpi" data-field="selesai" data-row="0">—</b></span></div>
+    <div class="card tile" data-tile="done" role="button" tabindex="0"><span class="lbl">Sudah diambil</span><span class="big"><b id="t-done" data-source="kpi" data-field="selesai" data-row="0">—</b></span></div>
     <div class="card tile" data-tile="part" role="button" tabindex="0"><span class="lbl">Ready via Partman (NN)</span><span class="big"><b id="t-part" data-source="kpi" data-field="partman" data-row="0">—</b></span></div>
     <div class="card tile" data-tile="umur" role="button" tabindex="0"><span class="lbl">Umur order terlama (hari)</span><span class="big"><b id="t-umur" data-source="kpi" data-field="umur_maks" data-row="0">—</b></span></div>
   </div>
@@ -163,7 +163,7 @@ body.locked #rp{display:none}
   <details>
     <summary>Aturan yang dipakai</summary>
     <ul>
-      <li>PSO dicocokkan dengan sheet Keterangan lewat Nomor PSO dan Kode Barang. Part tampil jika Tgl Ready terisi dan Tgl Ambil kosong.</li>
+      <li>PSO dicocokkan dengan sheet Keterangan lewat Nomor PSO dan Kode Barang. Satu PSO tetap tampil selama masih ada barangnya yang Tgl Ambil-nya kosong, asalkan sudah ada barangnya yang Tgl Ready-nya terisi. PSO baru hilang kalau semua barangnya sudah punya Tgl Ambil.</li>
       <li>Nama Barang dibaca dari kolom Nama Barang sheet Data PSO. Bila kosong, diambil dari sheet Data Part berdasarkan Kode Barang. Bila masih kosong, diambil dari kolom Nama Barang sheet Keterangan; bila tetap tidak ada tertulis "Nama barang tidak ditemukan".</li>
       <li>Service Advisor NN atau kosong berarti pemesanan via Partman. PSO yang Ket-nya "Batal" tidak masuk daftar, tetapi tetap tampil di rincian detail PSO.</li>
       <li>Baris di sheet Keterangan yang tidak punya data PSO (tanpa Nomor PSO atau tidak ditemukan di Data PSO) tetap ditampilkan di kelompok "Tanpa data PSO", hanya dengan data dari sheet Keterangan.</li>
@@ -6879,6 +6879,14 @@ dash.calc('items', {
         sumber: 'Keterangan'
       });
     });
+    const gs = {};
+    out.forEach(x => {
+      if (x.state === 'Batal') return;
+      const a = gs[x.grup] || (gs[x.grup] = {ready: false, open: false});
+      if (x.state === 'Ready' || x.state === 'Selesai') a.ready = true;
+      if (!x.tgl_ambil) a.open = true;
+    });
+    out.forEach(x => { const a = gs[x.grup]; x.aktif = !!(a && a.ready && a.open); });
     return out;
   }
 });
@@ -6887,6 +6895,12 @@ dash.calc('ready', {
   title: 'Part ready dan sudah diambil',
   description: 'Barang yang Tgl Ready-nya terisi di Keterangan dan bukan batal; Selesai bila Tgl Ambil terisi.',
   fn: (items) => items.filter(x => x.state === 'Ready' || x.state === 'Selesai')
+});
+dash.calc('tampil', {
+  inputs: ['items'],
+  title: 'PSO yang masih ditampilkan',
+  description: 'Barang (bukan batal) dari PSO yang sudah punya barang ready dan belum semua barangnya punya Tgl Ambil.',
+  fn: (items) => items.filter(x => x.aktif && x.state !== 'Batal')
 });
 dash.calc('pso_total', {
   inputs: ['items'],
@@ -6902,14 +6916,14 @@ dash.calc('pso_total', {
   }
 });
 dash.calc('sa_summary', {
-  inputs: ['ready'],
+  inputs: ['tampil'],
   title: 'Ringkasan per SA',
-  description: 'Jumlah item dan PSO yang ready belum diambil per Service Advisor.',
-  fn: (ready) => {
+  description: 'Jumlah item ready (belum diambil) dan jumlah PSO yang masih tampil per Service Advisor.',
+  fn: (tampil) => {
     const g = {};
-    ready.filter(r => r.state === 'Ready').forEach(r => {
+    tampil.forEach(r => {
       const a = g[r.service_advisor] || (g[r.service_advisor] = {service_advisor: r.service_advisor, item: 0, psos: {}});
-      a.item += 1;
+      if (r.state === 'Ready') a.item += 1;
       a.psos[r.grup] = 1;
     });
     return Object.values(g).map(a => ({service_advisor: a.service_advisor, item: a.item, pso: Object.keys(a.psos).length}));
@@ -7217,7 +7231,7 @@ dash.loader('info', {
   });
 
   function draw() {
-    const k = dash.data('kpi'), s = dash.data('sa_summary'), r = dash.data('ready');
+    const k = dash.data('kpi'), s = dash.data('sa_summary'), r = dash.data('tampil');
     const inf = dash.data('info'), inff = dash.data('info_file'), sm0 = dash.data('sumber');
     const perEl = document.getElementById('per');
     const live = inf.status === 'ok' && inf.data.length && inf.data[0].per;
@@ -7248,7 +7262,6 @@ dash.loader('info', {
     });
     const q = st.q.trim().toLowerCase();
     const rows = all.filter(x => {
-      if (x.state !== 'Ready' && !st.done) return false;
       if (st.sa !== 'Semua' && x.service_advisor !== st.sa) return false;
       if (!q) return true;
       return [x.nomor_pso, x.customer, x.no_polisi, x.kode_barang, x.nama_barang].join(' ').toLowerCase().indexOf(q) > -1;
@@ -7285,7 +7298,7 @@ dash.loader('info', {
       g.appendChild(head);
       const sc = el('div', 'scroll');
       const t = document.createElement('table');
-      t.setAttribute('data-source', 'ready');
+      t.setAttribute('data-source', 'tampil');
       t.setAttribute('data-row-key', 'key');
       const hr = document.createElement('tr');
       hr.appendChild(el('th', 'num', 'No'));
