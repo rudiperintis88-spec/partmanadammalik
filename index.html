@@ -189,13 +189,16 @@ body{padding:14px 12px 40px}
 @media (min-width:721px){.rp .hd h1{font-size:clamp(22px,2vw,26px)}}
 @media (max-width:900px){.rp .hr{align-self:flex-start}}
 @media (max-width:720px){.rp .hr{align-self:stretch}.rp .hd h1{font-size:clamp(22px,6.5vw,28px)}}
+
+.rp .rbtn{background:var(--color-panel);border-color:var(--color-border-line)}
+.rp .rbtn:hover{background:color-mix(in srgb,var(--color-fg) 5%,var(--color-panel))}
 </style>
 </head>
 <body class="locked">
 <div id="gate" class="gate">
   <form id="gateForm" class="gatebox" autocomplete="off">
     <h1>Pemesanan Sparepart<br>GR Adam Malik</h1>
-    <p class="muted">Masukkan nama dan password untuk membuka dashboard.</p>
+    <p class="muted">Masukkan nama dan password</p>
     <input type="text" id="gateName" placeholder="Nama" aria-label="Nama lengkap" autocomplete="off" autocapitalize="off" spellcheck="false" required autofocus>
     <input type="password" id="gateInput" placeholder="Password" aria-label="Password" autocomplete="off">
     <button type="submit">Masuk</button>
@@ -214,7 +217,7 @@ body{padding:14px 12px 40px}
         <span class="st" id="st">—</span>
         <button type="button" class="rbtn" id="rfs"><span class="ic">↻</span>Refresh</button>
       </div>
-      <p class="src">Sumber : Sheet Data PSO dan Keterangan (<span id="src-n" data-source="sumber" data-field="baris" data-row="0">—</span> baris)</p>
+      <p class="src">Sumber : Sparepart Adam Malik</p>
     </div>
   </header>
   <div class="tiles">
@@ -7343,7 +7346,6 @@ dash.loader('info', {
     rb.disabled = !!inf.refreshing;
     rb.querySelector('.ic').classList.toggle('spin', !!inf.refreshing);
     setStatus(!!live);
-    document.getElementById('src-n').textContent = sm0.status === 'ok' && sm0.data.length ? fmt(sm0.data[0].baris) : '—';
     const kr = k.status === 'ok' && k.data.length ? k.data[0] : null;
     [['t-item', 'item'], ['t-done', 'selesai'], ['t-part', 'partman'], ['t-umur', 'umur_maks']].forEach(p => {
       document.getElementById(p[0]).textContent = kr ? fmt(kr[p[1]]) : '—';
@@ -7471,7 +7473,7 @@ dash.loader('info', {
     st.textContent = '';
     const m = dash.mode();
     if (dash.data('info').refreshing) {
-      st.textContent = 'Membaca ulang Data PSO, Keterangan, dan Data Part…';
+      st.textContent = 'Menyinkronkan...';
     } else if (m === 'live') {
       st.appendChild(document.createTextNode('Live · tersinkron '));
       st.appendChild(el('b', '', lastStamp || '—'));
