@@ -120,6 +120,69 @@ body.locked #rp{display:none}
 .rp .rbtn{font-weight:700;background:color-mix(in srgb,#2563eb 9%,var(--color-panel));border-color:color-mix(in srgb,#2563eb 22%,var(--color-panel))}
 .rp .rbtn:hover{background:color-mix(in srgb,#2563eb 16%,var(--color-panel))}
 .rp .hr .src{margin-top:2px}
+@media (max-width:720px){
+html,body{overflow-x:hidden}
+body{padding:14px 12px 40px}
+.rp{max-width:100%}
+.rp .hd{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;padding-bottom:14px}
+.rp .hd > div:first-child{flex:0 0 auto;width:100%}
+.rp .hd h1{font-size:clamp(24px,7.2vw,32px);line-height:1.15;overflow-wrap:break-word}
+.rp .per{font-size:13px}
+.rp .hr{max-width:none;width:100%;align-items:stretch;gap:8px}
+.rp .line1{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
+.rp .line1 > .ic{display:none}
+.rp .st{font-size:13px;line-height:1.4}
+.rp .rbtn{width:100%;justify-content:center;font-size:15px;padding:10px 16px}
+.rp .src{text-align:left;font-size:12px}
+.rp .sub{font-size:13px}
+.rp .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.rp .tiles .card{padding:12px}
+.rp .lbl{font-size:12px}
+.rp .big{font-size:26px}
+.rp .controls{flex-direction:column;align-items:stretch;gap:10px}
+.rp .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.rp .chip{flex:0 0 auto;white-space:nowrap}
+.rp .search{max-width:none;width:100%;flex:0 0 auto}
+.rp .ghead{padding:12px 14px}
+.rp .ghead h2{font-size:15px}
+.rp .ghead .meta{margin-left:0;width:100%}
+.rp .group table{min-width:0;width:100%}
+.rp .group thead{display:none}
+.rp .group tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:12px 14px;border-bottom:1px solid var(--color-border-line)}
+.rp .group tbody tr:last-child{border-bottom:0}
+.rp .group td{display:block;padding:0;border:0;white-space:normal;text-align:left}
+.rp .group td[data-col=no]{order:1;flex:0 0 auto;min-width:1.6em;color:var(--color-fg-muted);font-size:12px}
+.rp .group td[data-col=nomor_pso]{order:2;flex:1 1 0;min-width:0;font-weight:600;font-size:13px}
+.rp .group td[data-col=status]{order:3;flex:0 0 auto}
+.rp .group td[data-col=customer]{order:4;flex:1 1 100%;font-weight:500}
+.rp .group td[data-col=tgl_order],.rp .group td[data-col=umur_hari],.rp .group td[data-col=no_polisi]{flex:0 0 auto;font-size:13px;color:var(--color-fg-muted)}
+.rp .group td[data-col=tgl_order]{order:5}
+.rp .group td[data-col=umur_hari]{order:6}
+.rp .group td[data-col=no_polisi]{order:7}
+.rp .group td[data-col=tgl_order]::before{content:'Order '}
+.rp .group td[data-col=no_polisi]::before{content:'Polisi '}
+.rp .box{overflow:visible}
+.rp .box table,.rp .lbox table{min-width:0;width:100%}
+.rp .lbox{max-height:none;overflow:visible}
+.rp .box thead{display:none}
+.rp .box tbody tr{display:block;padding:12px 14px;border-bottom:1px solid var(--color-border-line)}
+.rp .box tbody tr:last-child{border-bottom:0}
+.rp .box td{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:3px 0;border:0;white-space:normal;text-align:right;overflow-wrap:anywhere}
+.rp .box td::before{content:attr(data-label);flex:0 0 36%;text-align:left;color:var(--color-fg-muted);font-size:12px}
+.rp .box td:empty{display:none}
+.rp .pp-back{padding-inline:0}
+.rp .pp{width:100%;border-radius:0;border-inline:0}
+.rp .pp-bar{position:sticky;top:0;z-index:3;background:var(--color-panel);padding:10px 12px;gap:8px}
+.rp .pp-bar h3{order:10;flex:1 1 100%;font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.rp .pp-bar .sp{display:none}
+.rp .pp-bar .note{order:11;flex:1 1 100%}
+.rp .btn{padding:7px 10px;font-size:13px}
+.rp .pp-in{padding:12px}
+.rp .pp-body{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rp .pp-body dd{font-size:14px}
+.rp .pp-body dt{font-size:12px}
+.rp .tot{padding:10px 4px;font-size:13px;gap:4px 14px}
+}
 </style>
 </head>
 <body class="locked">
@@ -6879,6 +6942,22 @@ dash.calc('items', {
         sumber: 'Keterangan'
       });
     });
+    const fillBy = (field, onlyPso) => {
+      const first = {}, alt = {};
+      out.forEach(x => {
+        if ((onlyPso && !x.nomor_pso) || !x[field]) return;
+        if (!/^_+/.test(x[field])) { if (!first[x.grup]) first[x.grup] = x[field]; }
+        else if (!alt[x.grup]) alt[x.grup] = x[field];
+      });
+      out.forEach(x => {
+        if ((onlyPso && !x.nomor_pso) || x[field]) return;
+        const v = first[x.grup] || alt[x.grup];
+        if (v) x[field] = v;
+      });
+    };
+    fillBy('tgl_pjr', true);
+    fillBy('wo_no', false);
+    fillBy('no_penitipan', false);
     const gs = {};
     out.forEach(x => {
       if (x.state === 'Batal') return;
@@ -7037,9 +7116,12 @@ dash.loader('info', {
     list.forEach((x, idx) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-key', x.key);
-      tr.appendChild(el('td', 'num', String(idx + 1)));
+      const tdn = el('td', 'num', String(idx + 1));
+      tdn.setAttribute('data-label', 'No');
+      tr.appendChild(tdn);
       dcols.forEach(c => {
         const td = el('td', c[2]);
+        td.setAttribute('data-label', c[1]);
         let v = x[c[0]];
         if (c[2] === 'num') v = (v == null || (c[0] === 'panjar' && !v)) ? '-' : fmt(v);
         td.textContent = v == null ? '' : String(v);
@@ -7123,9 +7205,12 @@ dash.loader('info', {
       const tr = document.createElement('tr');
       tr.setAttribute('data-key', x.key);
       tr.tabIndex = 0;
-      tr.appendChild(el('td', 'num', String(idx + 1)));
+      const tdn = el('td', 'num', String(idx + 1));
+      tdn.setAttribute('data-label', 'No');
+      tr.appendChild(tdn);
       lcols.forEach(c => {
         const td = document.createElement('td');
+        td.setAttribute('data-label', c[1]);
         if (c[2].indexOf('mono') > -1) td.className = 'mono';
         if (c[2].indexOf('num') > -1) td.className = c[2];
         const v = x[c[0]];
@@ -7314,9 +7399,12 @@ dash.loader('info', {
         tr.setAttribute('data-key', x.key);
         tr.tabIndex = 0;
         if (x.state !== 'Ready') tr.className = 'done';
-        tr.appendChild(el('td', 'num', String(idx + 1)));
+        const tdn = el('td', 'num', String(idx + 1));
+        tdn.setAttribute('data-label', 'No'); tdn.setAttribute('data-col', 'no');
+        tr.appendChild(tdn);
         cols.forEach(c => {
           const td = document.createElement('td');
+          td.setAttribute('data-label', c[1]); td.setAttribute('data-col', c[0]);
           if (c[2].indexOf('mono') > -1) td.className = 'mono';
           if (c[2].indexOf('num') > -1) td.className = c[2];
           const v = x[c[0]];
