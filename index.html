@@ -230,7 +230,7 @@ body{padding:14px 12px 40px}
       <li>Nama Barang dibaca dari kolom Nama Barang sheet Data PSO. Bila kosong, diambil dari sheet Data Part berdasarkan Kode Barang. Bila masih kosong, diambil dari kolom Nama Barang sheet Keterangan; bila tetap tidak ada tertulis "Nama barang tidak ditemukan".</li>
       <li>Service Advisor NN atau kosong berarti pemesanan via Partman. PSO yang Ket-nya "Batal" tidak masuk daftar, tetapi tetap tampil di rincian detail PSO.</li>
       <li>Baris di sheet Keterangan yang tidak punya data PSO (tanpa Nomor PSO atau tidak ditemukan di Data PSO) tetap ditampilkan di kelompok "Tanpa data PSO", hanya dengan data dari sheet Keterangan.</li>
-      <li>Umur dihitung dari Tgl Order sampai 6 November 2026. Selisih di detail = total Jlh dikurangi total Panjar.</li>
+      <li>Umur dihitung dari Tgl Order sampai hari ini (WIB). Selisih di detail = total Jlh dikurangi total Panjar.</li>
     </ul>
   </details>
   <div class="pp-back" id="pp" hidden>
@@ -6852,7 +6852,8 @@ dash.calc('items', {
   title: 'Semua barang PSO',
   description: 'Baris PSO digabung dengan Keterangan dan nama barang dari Data Part. Baris Keterangan yang tidak punya data PSO diambil apa adanya dari Keterangan.',
   fn: (pso, keterangan, part) => {
-    const asOf = Date.UTC(2026, 10, 6);
+    const _n = new Date(Date.now() + 7 * 3600 * 1000);
+    const asOf = Date.UTC(_n.getUTCFullYear(), _n.getUTCMonth(), _n.getUTCDate());
     const dmy = v => v ? v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) : '';
     const nama = {};
     part.forEach(p => { nama[p.kode_barang] = p.nama_barang; });
@@ -7201,7 +7202,15 @@ dash.loader('info', {
     });
     const thead = document.createElement('thead'); thead.appendChild(hr); t.appendChild(thead);
     const tb = document.createElement('tbody');
-    d.rows.forEach((x, idx) => {
+    const gm = {}, uniq = [];
+    const itemF = ['kode_barang', 'nama_barang', 'tgl_ready', 'tgl_ambil'];
+    d.rows.forEach(r0 => {
+      let g = gm[r0.grup];
+      if (!g) { g = gm[r0.grup] = {row: Object.assign({}, r0), sets: {}}; itemF.forEach(f => { g.sets[f] = []; }); uniq.push(g); }
+      itemF.forEach(f => { if (r0[f] && g.sets[f].indexOf(r0[f]) < 0) g.sets[f].push(r0[f]); });
+    });
+    uniq.forEach(g => { itemF.forEach(f => { g.row[f] = g.sets[f].join(', '); }); });
+    uniq.map(g => g.row).forEach((x, idx) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-key', x.key);
       tr.tabIndex = 0;
