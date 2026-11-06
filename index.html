@@ -6782,14 +6782,6 @@ dash.calc('items', {
     keterangan.forEach(k => { ket[k.nomor_pso + '|' + k.kode_barang] = k; });
     const have = {};
     pso.forEach(p => { have[p.nomor_pso + '|' + p.kode_barang] = 1; });
-    const rg = {}, seenK = {};
-    const addR = (g, id, v) => { const sid = g + '#' + id; if (seenK[sid]) return; seenK[sid] = 1; const a = rg[g] || (rg[g] = []); if (v) a.push(v); };
-    pso.forEach(p => { const b = p.nomor_pso + '|' + p.kode_barang; if (ket[b]) addR(p.nomor_pso, b, ket[b].tgl_ready); });
-    keterangan.forEach((k, i) => {
-      if (have[k.nomor_pso + '|' + k.kode_barang]) return;
-      addR(k.nomor_pso || ('K|' + k.customer + '|' + (k.no_polisi || '') + '|' + (k.tgl_order || '') + '|' + (k.service_advisor || '')), k.nomor_pso + '|' + k.kode_barang + '|K' + i, k.tgl_ready);
-    });
-    const sh = g => (rg[g] && rg[g].length === 1) ? rg[g][0] : '';
     const seen = {};
     const out = pso.map(p => {
       const base = p.nomor_pso + '|' + p.kode_barang;
@@ -6797,7 +6789,7 @@ dash.calc('items', {
       const key = seen[base] > 1 ? base + '#' + seen[base] : base;
       const k = ket[base];
       const batal = /^batal/i.test(p.keterangan);
-      const rdy = k ? (k.tgl_ready || sh(p.nomor_pso)) : '';
+      const rdy = k ? k.tgl_ready : '';
       const state = batal ? 'Batal' : (rdy ? (k.tgl_ambil ? 'Selesai' : 'Ready') : 'Belum ready');
       return {
         key: key,
@@ -6840,7 +6832,7 @@ dash.calc('items', {
       const g = k.nomor_pso || ('K|' + k.customer + '|' + (k.no_polisi || '') + '|' + (k.tgl_order || '') + '|' + (k.service_advisor || ''));
       const a = kg[g];
       const tglPjr = a.jlh === a.panjar && a.tgl ? a.tgl : k.tgl_pjr;
-      const rdyK = k.tgl_ready || sh(g);
+      const rdyK = k.tgl_ready;
       out.push({
         key: (k.nomor_pso || '-') + '|' + k.kode_barang + '|K' + (i + 1),
         nomor_pso: k.nomor_pso,
